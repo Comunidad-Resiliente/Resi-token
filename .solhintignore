@@ -1,0 +1,4 @@
+node_modules/
+contracts/external/*
+contracts/test/*
+contracts/mock/*

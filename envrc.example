@@ -1,0 +1,5 @@
+export REPORT_GAS=true
+export MUMBAI_ALCHEMY_KEY=''
+export MNEMONIC=''
+export SEPOLIA_ALCHEMY_KEY=''
+export POLYGONSCAN_API_KEY=''
