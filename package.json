@@ -19,7 +19,7 @@
         "prepare": "husky install"
     },
     "engines": {
-        "node": "v20"
+        "node": "v18"
     },
     "devDependencies": {
         "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
