@@ -2,19 +2,22 @@
 pragma solidity ^0.8.20;
 
 interface IResiToken {
-    function mintTo(address to, uint256 amount) external;
+    //function mintTo(address to, uint256 amount) external;
 
     function decimals() external view returns (uint8);
 
     function burn(uint256 value) external;
 
-    event MinterAdded(address newMinter);
-    event BurnWrappedToken(address user, uint256 value);
-    event MinterRemoved(address minter);
+    event ResiTokenInitialized(address treasury, uint8 decimals);
+    event BuilderAdded(address newMinter);
+    event BuilderRemoved(address builder);
+    event BurnResiToken(address user, uint256 value);
     event MintWrappedToken(address user, uint256 amount);
 
     error InvalidAddress(address adr);
-    error AlreadyMinter(address minter);
-    error InvalidMinter(address minter);
+    error AlreadyBuilder(address builder);
+    error InvalidBuilder(address builder);
     error InvalidDecimals(uint8 decimals);
+    error TransferForbidden(string message);
+    error TransferFromForbidden(string message);
 }

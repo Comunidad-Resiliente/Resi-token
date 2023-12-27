@@ -1,17 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
-
 import {IResiToken} from "./interfaces/IResiToken.sol";
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {AccessControlEnumerableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
 import {ERC20BurnableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
-import {ERC20PausableUpgradeable} from "@opezeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
+import {ERC20PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -57,7 +54,9 @@ contract ResiToken is
         TREASURY = _treasury;
 
         _grantRole(DEFAULT_ADMIN_ROLE, TREASURY);
-        _setRoleAdmin(BUILDER_ROLE, TREASURY);
+        _setRoleAdmin(BUILDER_ROLE, DEFAULT_ADMIN_ROLE);
+
+        emit ResiTokenInitialized(_treasury, _decimals);
     }
 
     /**************************** GETTERS  ****************************/
@@ -68,7 +67,7 @@ contract ResiToken is
         return "1.0.0";
     }
 
-    function decimals() public view override(ERC20Upgradeable, IWrappedToken) returns (uint8) {
+    function decimals() public view override(ERC20Upgradeable, IResiToken) returns (uint8) {
         return _DECIMALS;
     }
 
@@ -92,24 +91,24 @@ contract ResiToken is
 
     function addBuilderBatch() external onlyRole(DEFAULT_ADMIN_ROLE) {}
 
-    function removeBuilder(address _minter) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_minter == address(0)) {
-            revert InvalidAddress(_minter);
+    function removeBuilder(address _builder) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_builder == address(0)) {
+            revert InvalidAddress(_builder);
         }
-        if (!hasRole(MINTER_ROLE, _minter)) {
-            revert InvalidMinter(_minter);
+        if (!hasRole(BUILDER_ROLE, _builder)) {
+            revert InvalidBuilder(_builder);
         }
-        _revokeRole(MINTER_ROLE, _minter);
+        _revokeRole(BUILDER_ROLE, _builder);
 
-        emit MinterRemoved(_minter);
+        emit BuilderRemoved(_builder);
     }
 
-    function award(address _to, uint256 _amount) external onlyMinter {
+    function award(address _to, uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _mint(_to, _amount);
         emit MintWrappedToken(_to, _amount);
     }
 
-    function burn(uint256 value) public override(ERC20BurnableUpgradeable, IResiToken) onlyMinter {
+    function burn(uint256 value) public override(ERC20BurnableUpgradeable, IResiToken) {
         super.burn(value);
         emit BurnResiToken(_msgSender(), value);
     }
@@ -128,10 +127,19 @@ contract ResiToken is
         revert TransferFromForbidden("RESIToken: NO TRANSFER FROM ALLOWED");
     }
 
+    /**************************** INTERNAL  ****************************/
+    function _update(
+        address from,
+        address to,
+        uint256 value
+    ) internal virtual override(ERC20PausableUpgradeable, ERC20Upgradeable) whenNotPaused {
+        ERC20PausableUpgradeable._update(from, to, value);
+    }
+
     /**************************** MODIFIERS  ****************************/
 
-    modifier onlyMinter() {
-        require(hasRole(MINTER_ROLE, _msgSender()), "INVALID PERMISSIONS");
+    modifier onlyBuilder() {
+        require(hasRole(BUILDER_ROLE, _msgSender()), "INVALID PERMISSIONS");
         _;
     }
 }
