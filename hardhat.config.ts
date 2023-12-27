@@ -16,7 +16,7 @@ const config: HardhatUserConfig = {
   abiExporter: {
     path: './abis',
     runOnCompile: false,
-    // only: [':BridgeCore$', ':BridgeRegistry$', ':TokenTransfer$]
+    only: [':ResiToken$']
   },
   contractSizer: {
     alphaSort: true,

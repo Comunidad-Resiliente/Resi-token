@@ -29,6 +29,11 @@ contract ResiToken is
 
     address public TREASURY;
 
+    address public VALUE_TOKEN;
+
+    mapping(uint256 serieId => uint256 supplyEmitted) public serieSupplies;
+    mapping(uint256 serieId => mapping(address user => uint256 balance)) public userSerieBalance;
+
     constructor() {
         _disableInitializers();
     }
@@ -37,10 +42,12 @@ contract ResiToken is
         string memory _name,
         string memory _symbol,
         uint8 _decimals,
-        address _treasury
+        address _treasury,
+        address _token
     ) public initializer {
         if (_treasury == address(0)) revert InvalidAddress(_treasury);
         if (_decimals == 0) revert InvalidDecimals(_decimals);
+        if (_token == address(0)) revert InvalidAddress(_token);
 
         __ERC20_init_unchained(_name, _symbol);
         __ReentrancyGuard_init_unchained();
@@ -53,10 +60,12 @@ contract ResiToken is
 
         TREASURY = _treasury;
 
+        VALUE_TOKEN = _token;
+
         _grantRole(DEFAULT_ADMIN_ROLE, TREASURY);
         _setRoleAdmin(BUILDER_ROLE, DEFAULT_ADMIN_ROLE);
 
-        emit ResiTokenInitialized(_treasury, _decimals);
+        emit ResiTokenInitialized(_treasury, _token, _decimals);
     }
 
     /**************************** GETTERS  ****************************/
@@ -78,6 +87,13 @@ contract ResiToken is
 
     function unpause() external onlyRole(DEFAULT_ADMIN_ROLE) whenPaused {
         _unpause();
+    }
+
+    function setValueToken(address _newToken) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        if (_newToken == address(0)) revert InvalidAddress(_newToken);
+        address oldToken = _newToken;
+        VALUE_TOKEN = _newToken;
+        emit ValueTokenUpdated(oldToken, _newToken);
     }
 
     function addBuilder(address _builder) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
@@ -102,26 +118,46 @@ contract ResiToken is
         }
     }
 
-    function award(address _to, uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
-        require(hasRole(BUILDER_ROLE, _to), "ResiToken: ACCOUNT HAS NOT VALID ROLE");
-        if (!hasRole(BUILDER_ROLE, _to)) revert NotBuilder(_to);
-        _mint(_to, _amount);
-        emit ResiTokenMinted(_to, _amount);
+    function award(address _to, uint256 _amount, uint256 _serieId) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        _award(_to, _amount, _serieId);
     }
 
     function awardBatch(
         address[] memory _users,
-        uint256[] memory _amounts
+        uint256[] memory _amounts,
+        uint256 _serieId
     ) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        if (_serieId == 0) revert InvalidSerie(_serieId);
         require(_users.length == _amounts.length, "ResiToken: users and amounts length mismatch");
         for (uint256 i = 0; i < _users.length; i++) {
-            _award(_users[i], _amounts[i]);
+            _award(_users[i], _amounts[i], _serieId);
         }
     }
 
-    function burn(uint256 value) public override(ERC20BurnableUpgradeable, IResiToken) whenNotPaused {
-        super.burn(value);
-        emit BurnResiToken(_msgSender(), value);
+    function burn(uint256 _value, uint256 _serieId) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        if (_serieId == 0) revert InvalidSerie(_serieId);
+        ERC20BurnableUpgradeable.burn(_value);
+        serieSupplies[_serieId] -= _value;
+        emit ResiTokenBurnt(_msgSender(), _value, _serieId);
+    }
+
+    function exit(uint256 _serieId) external whenNotPaused nonReentrant {
+        _checkExit(_serieId);
+
+        uint256 currentValueTokenBalance = IERC20(VALUE_TOKEN).balanceOf(address(this));
+        uint256 userBalance = userSerieBalance[_serieId][_msgSender()];
+        uint256 quote = (userBalance * currentValueTokenBalance) / serieSupplies[_serieId];
+
+        if (quote <= currentValueTokenBalance && quote > 0) {
+            //TODO: CHECK THIS THAT MIGHT REVERT DUE TO NOT ALLOWING IT.
+            SafeERC20.safeTransferFrom(IERC20(address(this)), _msgSender(), address(this), quote);
+            SafeERC20.safeTransfer(IERC20(VALUE_TOKEN), _msgSender(), quote);
+            userSerieBalance[_serieId][_msgSender()] = 0;
+
+            emit Exit(_msgSender(), quote, _serieId);
+        } else {
+            revert InvalidQuote(currentValueTokenBalance, userBalance, serieSupplies[_serieId], quote);
+        }
     }
 
     /**
@@ -148,12 +184,30 @@ contract ResiToken is
         emit BuilderAdded(_builder);
     }
 
-    function _award(address _user, uint256 _amount) internal onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+    function _award(
+        address _user,
+        uint256 _amount,
+        uint256 _serieId
+    ) internal onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        if (_serieId == 0) revert InvalidSerie(_serieId);
         if (_user == address(0)) revert InvalidAddress(_user);
         if (_amount == 0) revert InvalidAmount(_amount);
-        if (!hasRole(BUILDER_ROLE, _user)) revert NotBuilder(_user);
+        if (!hasRole(BUILDER_ROLE, _user)) revert InvalidBuilder(_user);
         _mint(_user, _amount);
-        emit ResiTokenMinted(_user, _amount);
+        serieSupplies[_serieId] += _amount;
+        userSerieBalance[_serieId][_user] += _amount;
+        emit ResiTokenMinted(_user, _amount, _serieId);
+    }
+
+    /**
+     * @dev Internal function to perform valid exit
+     */
+    function _checkExit(uint256 _serieId) internal view {
+        require(_msgSender() != TREASURY, "ResiToken: INVALID ACTION");
+        require(hasRole(BUILDER_ROLE, _msgSender()), "ResiToken: ACCOUNT HAS NOT VALID ROLE");
+        require(serieSupplies[_serieId] > 0, "ResiToken: SERIE WITH NO MINTED SUPPLY");
+        require(userSerieBalance[_serieId][_msgSender()] > 0, "ResiToken: USER WITH NO FUNDS TO EXIT");
+        require(IERC20(VALUE_TOKEN).balanceOf(address(this)) > 0, "ResiToken: NO VALUE TOKENS");
     }
 
     function _update(
@@ -170,4 +224,8 @@ contract ResiToken is
         require(hasRole(BUILDER_ROLE, _msgSender()), "INVALID PERMISSIONS");
         _;
     }
+
+    /// @dev Leave a gap betweeen inherited contracts variables in order
+    /// @dev to be able to add more variables in them later.
+    uint256[20] private upgradeGap;
 }
