@@ -80,18 +80,11 @@ contract ResiToken is
         _unpause();
     }
 
-    function addBuilder(address _builder) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_builder == address(0)) revert InvalidAddress(_builder);
-        if (hasRole(BUILDER_ROLE, _builder)) {
-            revert AlreadyBuilder(_builder);
-        }
-        _grantRole(BUILDER_ROLE, _builder);
-        emit BuilderAdded(_builder);
+    function addBuilder(address _builder) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        _addBuilder(_builder);
     }
 
-    function addBuilderBatch() external onlyRole(DEFAULT_ADMIN_ROLE) {}
-
-    function removeBuilder(address _builder) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function removeBuilder(address _builder) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         if (_builder == address(0)) {
             revert InvalidAddress(_builder);
         }
@@ -103,12 +96,30 @@ contract ResiToken is
         emit BuilderRemoved(_builder);
     }
 
-    function award(address _to, uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _mint(_to, _amount);
-        emit MintWrappedToken(_to, _amount);
+    function addBuildersBatch(address[] memory _builders) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        for (uint256 i = 0; i < _builders.length; ++i) {
+            _addBuilder(_builders[i]);
+        }
     }
 
-    function burn(uint256 value) public override(ERC20BurnableUpgradeable, IResiToken) {
+    function award(address _to, uint256 _amount) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        require(hasRole(BUILDER_ROLE, _to), "ResiToken: ACCOUNT HAS NOT VALID ROLE");
+        if (!hasRole(BUILDER_ROLE, _to)) revert NotBuilder(_to);
+        _mint(_to, _amount);
+        emit ResiTokenMinted(_to, _amount);
+    }
+
+    function awardBatch(
+        address[] memory _users,
+        uint256[] memory _amounts
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        require(_users.length == _amounts.length, "ResiToken: users and amounts length mismatch");
+        for (uint256 i = 0; i < _users.length; i++) {
+            _award(_users[i], _amounts[i]);
+        }
+    }
+
+    function burn(uint256 value) public override(ERC20BurnableUpgradeable, IResiToken) whenNotPaused {
         super.burn(value);
         emit BurnResiToken(_msgSender(), value);
     }
@@ -128,6 +139,23 @@ contract ResiToken is
     }
 
     /**************************** INTERNAL  ****************************/
+    function _addBuilder(address _builder) internal onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        if (_builder == address(0)) revert InvalidAddress(_builder);
+        if (hasRole(BUILDER_ROLE, _builder)) {
+            revert AlreadyBuilder(_builder);
+        }
+        _grantRole(BUILDER_ROLE, _builder);
+        emit BuilderAdded(_builder);
+    }
+
+    function _award(address _user, uint256 _amount) internal onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        if (_user == address(0)) revert InvalidAddress(_user);
+        if (_amount == 0) revert InvalidAmount(_amount);
+        if (!hasRole(BUILDER_ROLE, _user)) revert NotBuilder(_user);
+        _mint(_user, _amount);
+        emit ResiTokenMinted(_user, _amount);
+    }
+
     function _update(
         address from,
         address to,
