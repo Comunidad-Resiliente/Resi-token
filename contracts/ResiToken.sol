@@ -43,7 +43,8 @@ contract ResiToken is
         string memory _symbol,
         uint8 _decimals,
         address _treasury,
-        address _token
+        address _token,
+        address[] calldata _builders
     ) public initializer {
         if (_treasury == address(0)) revert InvalidAddress(_treasury);
         if (_decimals == 0) revert InvalidDecimals(_decimals);
@@ -64,6 +65,10 @@ contract ResiToken is
 
         _grantRole(DEFAULT_ADMIN_ROLE, TREASURY);
         _setRoleAdmin(BUILDER_ROLE, DEFAULT_ADMIN_ROLE);
+
+        for (uint256 i; i < _builders.length; i++) {
+            _addBuilder(_builders[i]);
+        }
 
         emit ResiTokenInitialized(_treasury, _token, _decimals);
     }
