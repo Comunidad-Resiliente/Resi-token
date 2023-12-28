@@ -29,7 +29,7 @@ contract ResiToken is
 
     address public TREASURY;
 
-    address public VALUE_TOKEN;
+    address public STABLE_TOKEN;
 
     mapping(uint256 serieId => uint256 supplyEmitted) public serieSupplies;
     mapping(uint256 serieId => mapping(address user => uint256 balance)) public userSerieBalance;
@@ -61,7 +61,7 @@ contract ResiToken is
 
         TREASURY = _treasury;
 
-        VALUE_TOKEN = _token;
+        STABLE_TOKEN = _token;
 
         _grantRole(DEFAULT_ADMIN_ROLE, TREASURY);
         _setRoleAdmin(BUILDER_ROLE, DEFAULT_ADMIN_ROLE);
@@ -97,7 +97,7 @@ contract ResiToken is
     function setValueToken(address _newToken) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         if (_newToken == address(0)) revert InvalidAddress(_newToken);
         address oldToken = _newToken;
-        VALUE_TOKEN = _newToken;
+        STABLE_TOKEN = _newToken;
         emit ValueTokenUpdated(oldToken, _newToken);
     }
 
@@ -149,14 +149,14 @@ contract ResiToken is
     function exit(uint256 _serieId) external whenNotPaused nonReentrant {
         _checkExit(_serieId);
 
-        uint256 currentValueTokenBalance = IERC20(VALUE_TOKEN).balanceOf(address(this));
+        uint256 currentValueTokenBalance = IERC20(STABLE_TOKEN).balanceOf(address(this));
         uint256 userBalance = userSerieBalance[_serieId][_msgSender()];
         uint256 quote = (userBalance * currentValueTokenBalance) / serieSupplies[_serieId];
 
         if (quote <= currentValueTokenBalance && quote > 0) {
             //TODO: CHECK THIS THAT MIGHT REVERT DUE TO NOT ALLOWING IT.
             SafeERC20.safeTransferFrom(IERC20(address(this)), _msgSender(), address(this), quote);
-            SafeERC20.safeTransfer(IERC20(VALUE_TOKEN), _msgSender(), quote);
+            SafeERC20.safeTransfer(IERC20(STABLE_TOKEN), _msgSender(), quote);
             userSerieBalance[_serieId][_msgSender()] = 0;
 
             emit Exit(_msgSender(), quote, _serieId);
@@ -212,7 +212,7 @@ contract ResiToken is
         require(hasRole(BUILDER_ROLE, _msgSender()), "ResiToken: ACCOUNT HAS NOT VALID ROLE");
         require(serieSupplies[_serieId] > 0, "ResiToken: SERIE WITH NO MINTED SUPPLY");
         require(userSerieBalance[_serieId][_msgSender()] > 0, "ResiToken: USER WITH NO FUNDS TO EXIT");
-        require(IERC20(VALUE_TOKEN).balanceOf(address(this)) > 0, "ResiToken: NO VALUE TOKENS");
+        require(IERC20(STABLE_TOKEN).balanceOf(address(this)) > 0, "ResiToken: NO VALUE TOKENS");
     }
 
     function _update(

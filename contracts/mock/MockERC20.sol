@@ -15,6 +15,7 @@ contract MockERC20 is ERC20Burnable, AccessControlEnumerable {
         _rolesSet.add(MINTER_ROLE);
 
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _grantRole(MINTER_ROLE, _msgSender());
 
         _mint(msg.sender, initialSupply);
     }
