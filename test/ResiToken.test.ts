@@ -237,4 +237,71 @@ describe('Bridge Registry', () => {
       .to.be.revertedWithCustomError(ResiToken, 'InvalidBuilder')
       .withArgs(invalidBuilder)
   })
+
+  it('Should not allow to award if invalid role', async () => {
+    // WHEN
+    try {
+      await ResiToken.connect(invalidSigner).award(await MockToken.getAddress(), '10', 1)
+    } catch (error: unknown) {
+      // THEN
+      const err = error.message
+      expect(err).to.include('AccessControlUnauthorizedAccount')
+    }
+  })
+
+  it('Should not allow to award user if serie id is zero', async () => {
+    // GIVEN
+    const serieId = 0
+    const userToAward = await user.getAddress()
+    const amount = '10'
+    // WHEN //THEN
+    await expect(ResiToken.connect(treasury).award(userToAward, amount, serieId))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidSerie')
+      .withArgs(serieId)
+  })
+
+  it('Should not allow to award user if invalid address', async () => {
+    // GIVEN
+    const serieId = 1
+    const userToAward = ethers.ZeroAddress
+    const amount = '10'
+    // WHEN //THEN
+    await expect(ResiToken.connect(treasury).award(userToAward, amount, serieId))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidAddress')
+      .withArgs(userToAward)
+  })
+
+  it('Should not allowt to award user if invalid amount', async () => {
+    // GIVEN
+    const serieId = 1
+    const userToAward = await user.getAddress()
+    const amount = 0
+    // WHEN //THEN
+    await expect(ResiToken.connect(treasury).award(userToAward, amount, serieId))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidAmount')
+      .withArgs(amount)
+  })
+
+  it('Should not allowt to award user if user is not builder', async () => {
+    // GIVEN
+    const serieId = 1
+    const userToAward = await user.getAddress()
+    const amount = 20
+    // WHEN //THEN
+    await expect(ResiToken.connect(treasury).award(userToAward, amount, serieId))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidBuilder')
+      .withArgs(userToAward)
+  })
+
+  it('Should not allow to execute transfer', async () => {
+    await expect(ResiToken.connect(user).transfer(await deployer.getAddress(), '10'))
+      .to.be.revertedWithCustomError(ResiToken, 'TransferForbidden')
+      .withArgs('RESIToken: NO TRANSFER ALLOWED')
+  })
+
+  it('Should not allow to execute transfer from', async () => {
+    await expect(ResiToken.connect(user).transferFrom(await deployer.getAddress(), await deployer.getAddress(), '10'))
+      .to.be.revertedWithCustomError(ResiToken, 'TransferFromForbidden')
+      .withArgs('RESIToken: NO TRANSFER FROM ALLOWED')
+  })
 })
