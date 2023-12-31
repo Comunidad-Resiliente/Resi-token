@@ -136,8 +136,7 @@ contract ResiToken is
         uint256[] memory _amounts,
         uint256 _serieId
     ) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
-        if (_serieId == 0) revert InvalidSerie(_serieId);
-        require(_users.length == _amounts.length, "ResiToken: users and amounts length mismatch");
+        require(_users.length == _amounts.length, "RESIToken: users and amounts length mismatch");
         for (uint256 i = 0; i < _users.length; i++) {
             _award(_users[i], _amounts[i], _serieId);
         }
@@ -205,7 +204,7 @@ contract ResiToken is
         _mint(_user, _amount);
         serieSupplies[_serieId] += _amount;
         userSerieBalance[_serieId][_user] += _amount;
-        emit ResiTokenMinted(_user, _amount, _serieId);
+        emit UserAwarded(_user, _amount, _serieId);
     }
 
     /**

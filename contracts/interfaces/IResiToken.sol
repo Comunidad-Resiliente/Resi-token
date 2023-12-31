@@ -8,7 +8,7 @@ interface IResiToken {
     event BuilderAdded(address newMinter);
     event BuilderRemoved(address builder);
     event ResiTokenBurnt(address user, uint256 value, uint256 serieId);
-    event ResiTokenMinted(address user, uint256 amount, uint256 serieId);
+    event UserAwarded(address user, uint256 amount, uint256 serieId);
     event ValueTokenUpdated(address oldToken, address newToken);
     event Exit(address user, uint256 amount, uint256 serieId);
 

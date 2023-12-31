@@ -4,7 +4,7 @@ import {resiMainFixture} from './fixtures'
 import {Contract, Signer} from 'ethers'
 import {ResiToken} from '../typechain-types'
 import {DEFAULT_ADMIN_ROLE, BUILDER_ROLE} from './constants'
-import {deployMockERC20} from './utils'
+import {addBuilder, deployMockERC20} from './utils'
 
 describe('Bridge Registry', () => {
   let deployer: Signer
@@ -291,6 +291,63 @@ describe('Bridge Registry', () => {
     await expect(ResiToken.connect(treasury).award(userToAward, amount, serieId))
       .to.be.revertedWithCustomError(ResiToken, 'InvalidBuilder')
       .withArgs(userToAward)
+  })
+
+  it('Should allow to award user', async () => {
+    // GIVEN
+    const userToAward = await user.getAddress()
+    const serieId = 1
+    const amount = ethers.parseEther('0.3')
+    await addBuilder(userToAward)
+    const initialSerieSupply = await ResiToken.serieSupplies(serieId)
+    const initialUserSerieBalance = await ResiToken.userSerieBalance(serieId, userToAward)
+
+    // WHEN
+    await expect(ResiToken.connect(treasury).award(userToAward, amount, serieId))
+      .to.emit(ResiToken, 'UserAwarded')
+      .withArgs(userToAward, amount, serieId)
+
+    const finalserieSupply = await ResiToken.serieSupplies(serieId)
+    const finalUSerSerieBalance = await ResiToken.userSerieBalance(serieId, userToAward)
+    const userTotalBalance = await ResiToken.balanceOf(userToAward)
+
+    // THEN
+    expect(initialSerieSupply).to.be.equal(0)
+    expect(initialUserSerieBalance).to.be.equal(0)
+    expect(finalserieSupply).to.be.equal(amount)
+    expect(userTotalBalance).to.be.equal(finalUSerSerieBalance)
+  })
+
+  it('Should allow to award batch', async () => {
+    // GIVEN
+    const users = [await user.getAddress(), await deployer.getAddress()]
+    const amounts = [ethers.parseEther('0.3'), ethers.parseEther('0.2')]
+    const serieId = 1
+    await addBuilder(await user.getAddress())
+    await addBuilder(await deployer.getAddress())
+    // WHEN
+    await ResiToken.connect(treasury).awardBatch(users, amounts, serieId)
+
+    const userBalance = await ResiToken.balanceOf(await user.getAddress())
+    const deployerBalance = await ResiToken.balanceOf(await deployer.getAddress())
+    const serieSupply = await ResiToken.serieSupplies(serieId)
+    // THEN
+    expect(userBalance).to.be.equal(amounts[0])
+    expect(deployerBalance).to.be.equal(amounts[1])
+    expect(serieSupply).to.be.equal(ethers.parseEther('0.5'))
+  })
+
+  it('Should not allow to award batch if users and amount mismatch', async () => {
+    // GIVEN
+    const users = [await user.getAddress(), await deployer.getAddress()]
+    const amounts = [ethers.parseEther('0.3')]
+    const serieId = 1
+    await addBuilder(await user.getAddress())
+    await addBuilder(await deployer.getAddress())
+    // WHEN //THEN
+    await expect(ResiToken.connect(treasury).awardBatch(users, amounts, serieId)).to.be.revertedWith(
+      'RESIToken: users and amounts length mismatch'
+    )
   })
 
   it('Should not allow to execute transfer', async () => {
