@@ -20,3 +20,10 @@ export const addBuilder = async (user: string) => {
   const ResiToken: ResiToken = await ethers.getContract('ResiToken')
   await ResiToken.connect(treasurySigner).addBuilder(user)
 }
+
+export const award = async (user: string, amount: string, serieId: string) => {
+  const {treasury} = await getNamedAccounts()
+  const treasurySigner = await ethers.getSigner(treasury)
+  const ResiToken: ResiToken = await ethers.getContract('ResiToken')
+  await ResiToken.connect(treasurySigner).award(user, amount, serieId)
+}

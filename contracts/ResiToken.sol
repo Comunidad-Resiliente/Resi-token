@@ -31,6 +31,8 @@ contract ResiToken is
 
     address public STABLE_TOKEN;
 
+    bool public EXIT_STATE;
+
     mapping(uint256 serieId => uint256 supplyEmitted) public serieSupplies;
     mapping(uint256 serieId => mapping(address user => uint256 balance)) public userSerieBalance;
 
@@ -98,6 +100,16 @@ contract ResiToken is
         _unpause();
     }
 
+    function enableExits() external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        EXIT_STATE = true;
+        emit ExitStateUpdated(true);
+    }
+
+    function disableExits() external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
+        EXIT_STATE = false;
+        emit ExitStateUpdated(true);
+    }
+
     function setValueToken(address _newToken) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         if (_newToken == address(0)) revert InvalidAddress(_newToken);
         address oldToken = STABLE_TOKEN;
@@ -149,7 +161,7 @@ contract ResiToken is
         emit ResiTokenBurnt(_msgSender(), _value, _serieId);
     }
 
-    function exit(uint256 _serieId) external whenNotPaused nonReentrant {
+    function exit(uint256 _serieId) external whenExitIsEnabled nonReentrant {
         _checkExit(_serieId);
 
         uint256 currentValueTokenBalance = IERC20(STABLE_TOKEN).balanceOf(address(this));
@@ -157,11 +169,9 @@ contract ResiToken is
         uint256 quote = (userBalance * currentValueTokenBalance) / serieSupplies[_serieId];
 
         if (quote <= currentValueTokenBalance && quote > 0) {
-            //TODO: CHECK THIS THAT MIGHT REVERT DUE TO NOT ALLOWING IT.
-            SafeERC20.safeTransferFrom(IERC20(address(this)), _msgSender(), address(this), quote);
+            _transfer(_msgSender(), address(this), userBalance);
             SafeERC20.safeTransfer(IERC20(STABLE_TOKEN), _msgSender(), quote);
             userSerieBalance[_serieId][_msgSender()] = 0;
-
             emit Exit(_msgSender(), quote, _serieId);
         } else {
             revert InvalidQuote(currentValueTokenBalance, userBalance, serieSupplies[_serieId], quote);
@@ -228,8 +238,8 @@ contract ResiToken is
 
     /**************************** MODIFIERS  ****************************/
 
-    modifier onlyBuilder() {
-        require(hasRole(BUILDER_ROLE, _msgSender()), "INVALID PERMISSIONS");
+    modifier whenExitIsEnabled() {
+        require(!paused() && EXIT_STATE, "RESIToken: Exits disabled");
         _;
     }
 

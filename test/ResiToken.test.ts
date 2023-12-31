@@ -11,6 +11,7 @@ describe('Bridge Registry', () => {
   let treasury: Signer
   let invalidSigner: Signer
   let user: Signer
+  let userTwo: Signer
   let ResiToken: ResiToken
   let MockToken: Contract
 
@@ -21,6 +22,7 @@ describe('Bridge Registry', () => {
     treasury = await ethers.getSigner(accounts.treasury)
     invalidSigner = signers[18]
     user = signers[17]
+    userTwo = signers[16]
   })
 
   beforeEach(async () => {
@@ -348,6 +350,48 @@ describe('Bridge Registry', () => {
     await expect(ResiToken.connect(treasury).awardBatch(users, amounts, serieId)).to.be.revertedWith(
       'RESIToken: users and amounts length mismatch'
     )
+  })
+
+  it('Shoud allow to exit', async () => {
+    // GIVEN
+    const userToAward = await user.getAddress()
+    const amount = ethers.parseEther('0.3')
+    const serieId = 1
+    await addBuilder(userToAward)
+    await addBuilder(await userTwo.getAddress())
+    await ResiToken.connect(treasury).award(userToAward, amount, serieId)
+    await ResiToken.connect(treasury).award(await userTwo.getAddress(), ethers.parseEther('0.5'), serieId)
+    await ResiToken.connect(treasury).enableExits()
+
+    const userInitialResiBalance = await ResiToken.balanceOf(await user.getAddress())
+    const stableTokenContractBalance = await MockToken.balanceOf(await ResiToken.getAddress())
+    const userStableTokenInitialBalance = await MockToken.balanceOf(await user.getAddress())
+    const userSerieBalance = await ResiToken.userSerieBalance(serieId, await user.getAddress())
+
+    const quote = (amount * stableTokenContractBalance) / ethers.parseEther('0.8')
+
+    // WHEN
+    await expect(ResiToken.connect(user).exit(serieId))
+      .to.emit(ResiToken, 'Exit')
+      .withArgs(await user.getAddress(), quote, serieId)
+
+    const userFinalResiBalance = await ResiToken.balanceOf(await user.getAddress())
+    const userStableTokenFinalBalance = await MockToken.balanceOf(await user.getAddress())
+    const stableTokenContractFinalBalance = await MockToken.balanceOf(await ResiToken.getAddress())
+    const userSerieFinalBalance = await ResiToken.userSerieBalance(serieId, await user.getAddress())
+
+    const serieSupply = await ResiToken.serieSupplies(serieId)
+
+    // THEN
+    expect(userInitialResiBalance).to.be.equal(amount)
+    expect(userFinalResiBalance).to.be.equal(0)
+    expect(stableTokenContractBalance).to.be.equal(ethers.parseEther('5'))
+    expect(userStableTokenInitialBalance).to.be.equal(0)
+    expect(userStableTokenFinalBalance).to.be.equal(quote)
+    expect(stableTokenContractFinalBalance).to.be.lessThan(stableTokenContractBalance)
+    expect(serieSupply).to.be.equal(ethers.parseEther('0.8'))
+    expect(userSerieBalance).to.be.equal(amount)
+    expect(userSerieFinalBalance).to.be.equal(0)
   })
 
   it('Should not allow to execute transfer', async () => {
