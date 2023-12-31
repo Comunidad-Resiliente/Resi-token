@@ -85,6 +85,10 @@ contract ResiToken is
         return _DECIMALS;
     }
 
+    function isBuilder(address _builder) public view returns (bool) {
+        return hasRole(BUILDER_ROLE, _builder);
+    }
+
     /**************************** SETTERS  ****************************/
     function pause() external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         _pause();
@@ -96,7 +100,7 @@ contract ResiToken is
 
     function setValueToken(address _newToken) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         if (_newToken == address(0)) revert InvalidAddress(_newToken);
-        address oldToken = _newToken;
+        address oldToken = STABLE_TOKEN;
         STABLE_TOKEN = _newToken;
         emit ValueTokenUpdated(oldToken, _newToken);
     }
