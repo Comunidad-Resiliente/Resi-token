@@ -188,4 +188,53 @@ describe('Bridge Registry', () => {
       .to.be.revertedWithCustomError(ResiToken, 'AlreadyBuilder')
       .withArgs(await user.getAddress())
   })
+
+  it('Should allow to remove builder', async () => {
+    // GIVEN
+    const builder = await user.getAddress()
+    const userIsBuilderInitial = await ResiToken.isBuilder(builder)
+    await ResiToken.connect(treasury).addBuilder(builder)
+    const userIsBuilderMiddle = await ResiToken.isBuilder(builder)
+    // WHEN
+    await expect(ResiToken.connect(treasury).removeBuilder(builder))
+      .to.emit(ResiToken, 'BuilderRemoved')
+      .withArgs(builder)
+    const userIsBuilderFinal = await ResiToken.isBuilder(builder)
+    // THEN
+    // eslint-disable-next-line no-unused-expressions
+    expect(userIsBuilderInitial).to.be.false
+    // eslint-disable-next-line no-unused-expressions
+    expect(userIsBuilderMiddle).to.be.true
+    // eslint-disable-next-line no-unused-expressions
+    expect(userIsBuilderFinal).to.be.false
+  })
+
+  it('Should not allow to remove builder if invalid role', async () => {
+    // WHEN
+    try {
+      await ResiToken.connect(invalidSigner).removeBuilder(await MockToken.getAddress())
+    } catch (error: unknown) {
+      // THEN
+      const err = error.message
+      expect(err).to.include('AccessControlUnauthorizedAccount')
+    }
+  })
+
+  it('Should not allow to remove builder if invalid address', async () => {
+    // GIVEN
+    const invalidBuilder = ethers.ZeroAddress
+    // WHEN //THEN
+    await expect(ResiToken.connect(treasury).removeBuilder(invalidBuilder))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidAddress')
+      .withArgs(invalidBuilder)
+  })
+
+  it('Should not allow to remove builder if not builder', async () => {
+    // GIVEN
+    const invalidBuilder = await user.getAddress()
+    // WHEN //THEN
+    await expect(ResiToken.connect(treasury).removeBuilder(invalidBuilder))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidBuilder')
+      .withArgs(invalidBuilder)
+  })
 })
