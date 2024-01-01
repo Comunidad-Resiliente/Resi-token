@@ -394,6 +394,92 @@ describe('Bridge Registry', () => {
     expect(userSerieFinalBalance).to.be.equal(0)
   })
 
+  it('Should not allow to exit if exits are not enabled', async () => {
+    // GIVEN
+    const userToAward = await user.getAddress()
+    const amount = ethers.parseEther('0.3')
+    const serieId = 1
+    await addBuilder(userToAward)
+    await addBuilder(await userTwo.getAddress())
+    await ResiToken.connect(treasury).award(userToAward, amount, serieId)
+    await ResiToken.connect(treasury).award(await userTwo.getAddress(), ethers.parseEther('0.5'), serieId)
+
+    // WHEN //THEN
+    await expect(ResiToken.connect(user).exit(serieId)).to.be.revertedWith('RESIToken: Exits disabled')
+  })
+
+  it('Should not allow to exit if caller is treasury', async () => {
+    // GIVEN
+    await ResiToken.connect(treasury).enableExits()
+    // WHEN //THEN
+    await expect(ResiToken.connect(treasury).exit(1))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidAddress')
+      .withArgs(await treasury.getAddress())
+  })
+
+  it('Should not allow to exit if user is not builder', async () => {
+    // GIVEN
+    const notBuilder = await user.getAddress()
+    await ResiToken.connect(treasury).enableExits()
+    // WHEN // THEN
+    await expect(ResiToken.connect(user).exit(0))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidBuilder')
+      .withArgs(notBuilder)
+  })
+
+  it('Should not allow to exit if serie has not minted supply', async () => {
+    // GIVEN
+    await ResiToken.connect(treasury).addBuilder(await user.getAddress())
+    await ResiToken.connect(treasury).enableExits()
+    // WHEN // THEN
+    await expect(ResiToken.connect(user).exit(2))
+      .to.be.revertedWithCustomError(ResiToken, 'SerieWithNoMintedSupply')
+      .withArgs(2)
+  })
+
+  it('Should not allow to exit if user has no serie balance', async () => {
+    // GIVEN
+    await ResiToken.connect(treasury).addBuilder(await user.getAddress())
+    await ResiToken.connect(treasury).enableExits()
+    await ResiToken.connect(treasury).award(await user.getAddress(), '10', 2)
+    await ResiToken.connect(treasury).addBuilder(await deployer.getAddress())
+    await ResiToken.connect(treasury).award(await deployer.getAddress(), '10', 1)
+    // WHEN // THEN
+    await expect(ResiToken.connect(user).exit(1))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidUserSerieBalance')
+      .withArgs(0)
+  })
+
+  it('Should not allow to exit if contract has not enough balance of stable token', async () => {
+    // GIVEN
+    await ResiToken.connect(treasury).addBuilder(await user.getAddress())
+    await ResiToken.connect(treasury).enableExits()
+    await ResiToken.connect(treasury).award(await user.getAddress(), '10', 2)
+
+    const token = await deployMockERC20({name: 'TERC20', symbol: 'TERC20'})
+    await ResiToken.connect(treasury).setValueToken(await token.getAddress())
+
+    // WHEN // THEN
+    await expect(ResiToken.connect(user).exit(2)).to.be.revertedWithCustomError(ResiToken, 'InvalidQuote')
+  })
+
+  it('Should allow to pause contract and then upause it', async () => {
+    // GIVEN
+    const initialContractState = await ResiToken.connect(treasury).paused()
+    // WHEN
+    await ResiToken.connect(treasury).pause()
+    const middleContractState = await ResiToken.connect(treasury).paused()
+    await ResiToken.connect(treasury).unpause()
+    const finalContractState = await ResiToken.connect(treasury).paused()
+    // THEN
+    // eslint-disable-next-line no-unused-expressions
+    expect(initialContractState).to.be.false
+    // eslint-disable-next-line no-unused-expressions
+    expect(middleContractState).to.be.true
+    // eslint-disable-next-line no-unused-expressions
+    expect(finalContractState).to.be.false
+  })
+
   it('Should not allow to execute transfer', async () => {
     await expect(ResiToken.connect(user).transfer(await deployer.getAddress(), '10'))
       .to.be.revertedWithCustomError(ResiToken, 'TransferForbidden')

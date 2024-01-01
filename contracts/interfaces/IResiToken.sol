@@ -22,4 +22,6 @@ interface IResiToken {
     error TransferForbidden(string message);
     error TransferFromForbidden(string message);
     error InvalidQuote(uint256 currentValueTokenBalance, uint256 userBalance, uint256 serieSupplies, uint256 quote);
+    error SerieWithNoMintedSupply(uint256 serieId);
+    error InvalidUserSerieBalance(uint256 amount);
 }

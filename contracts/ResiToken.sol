@@ -221,11 +221,11 @@ contract ResiToken is
      * @dev Internal function to perform valid exit
      */
     function _checkExit(uint256 _serieId) internal view {
-        require(_msgSender() != TREASURY, "ResiToken: INVALID ACTION");
-        require(hasRole(BUILDER_ROLE, _msgSender()), "ResiToken: ACCOUNT HAS NOT VALID ROLE");
-        require(serieSupplies[_serieId] > 0, "ResiToken: SERIE WITH NO MINTED SUPPLY");
-        require(userSerieBalance[_serieId][_msgSender()] > 0, "ResiToken: USER WITH NO FUNDS TO EXIT");
-        require(IERC20(STABLE_TOKEN).balanceOf(address(this)) > 0, "ResiToken: NO VALUE TOKENS");
+        if (_msgSender() == TREASURY) revert InvalidAddress(_msgSender());
+        if (!hasRole(BUILDER_ROLE, _msgSender())) revert InvalidBuilder(_msgSender());
+        if (serieSupplies[_serieId] == 0) revert SerieWithNoMintedSupply(_serieId);
+        if (userSerieBalance[_serieId][_msgSender()] == 0)
+            revert InvalidUserSerieBalance(userSerieBalance[_serieId][_msgSender()]);
     }
 
     function _update(
