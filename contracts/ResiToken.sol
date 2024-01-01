@@ -107,7 +107,7 @@ contract ResiToken is
 
     function disableExits() external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         EXIT_STATE = false;
-        emit ExitStateUpdated(true);
+        emit ExitStateUpdated(false);
     }
 
     function setValueToken(address _newToken) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
@@ -156,7 +156,7 @@ contract ResiToken is
 
     function burn(uint256 _value, uint256 _serieId) external onlyRole(DEFAULT_ADMIN_ROLE) whenNotPaused {
         if (_serieId == 0) revert InvalidSerie(_serieId);
-        ERC20BurnableUpgradeable.burn(_value);
+        _burn(address(this), _value);
         serieSupplies[_serieId] -= _value;
         emit ResiTokenBurnt(_msgSender(), _value, _serieId);
     }
@@ -190,6 +190,14 @@ contract ResiToken is
      */
     function transferFrom(address, address, uint256) public pure override(ERC20Upgradeable) returns (bool) {
         revert TransferFromForbidden("RESIToken: NO TRANSFER FROM ALLOWED");
+    }
+
+    function burn(uint256) public pure override(ERC20BurnableUpgradeable) {
+        revert BurnForbbidden();
+    }
+
+    function burnFrom(address, uint256) public pure override(ERC20BurnableUpgradeable) {
+        revert BurnForbbidden();
     }
 
     /**************************** INTERNAL  ****************************/

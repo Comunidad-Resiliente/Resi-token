@@ -408,6 +408,22 @@ describe('Bridge Registry', () => {
     await expect(ResiToken.connect(user).exit(serieId)).to.be.revertedWith('RESIToken: Exits disabled')
   })
 
+  it('Should not allow to exit if exits are not enabled', async () => {
+    // GIVEN
+    const userToAward = await user.getAddress()
+    const amount = ethers.parseEther('0.3')
+    const serieId = 1
+    await addBuilder(userToAward)
+    await addBuilder(await userTwo.getAddress())
+    await ResiToken.connect(treasury).award(userToAward, amount, serieId)
+    await ResiToken.connect(treasury).award(await userTwo.getAddress(), ethers.parseEther('0.5'), serieId)
+    await ResiToken.connect(treasury).enableExits()
+    // WHEN
+    await expect(ResiToken.connect(treasury).disableExits()).to.emit(ResiToken, 'ExitStateUpdated').withArgs(false)
+    // THEN
+    await expect(ResiToken.connect(user).exit(serieId)).to.be.revertedWith('RESIToken: Exits disabled')
+  })
+
   it('Should not allow to exit if caller is treasury', async () => {
     // GIVEN
     await ResiToken.connect(treasury).enableExits()
@@ -480,6 +496,36 @@ describe('Bridge Registry', () => {
     expect(finalContractState).to.be.false
   })
 
+  it('Should not allow to burn if invalid serie', async () => {
+    // WHEN // THEN
+    await expect(ResiToken.connect(treasury)['burn(uint256,uint256)']('10', 0))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidSerie')
+      .withArgs(0)
+  })
+
+  it('Should not allow to burn if invalid role', async () => {
+    // WHEN
+    try {
+      await ResiToken.connect(invalidSigner)['burn(uint256,uint256)'](1, 1)
+    } catch (error: unknown) {
+      // THEN
+      const err = error.message
+      expect(err).to.include('AccessControlUnauthorizedAccount')
+    }
+  })
+
+  it('Should not allow to burn if no supply on contract', async () => {
+    // GIVEN
+    // WHEN
+    try {
+      await ResiToken.connect(treasury)['burn(uint256,uint256)']('10', 1)
+    } catch (error: unknown) {
+      // THEN
+      const err = error.message
+      expect(err).to.include('ERC20InsufficientBalance')
+    }
+  })
+
   it('Should not allow to execute transfer', async () => {
     await expect(ResiToken.connect(user).transfer(await deployer.getAddress(), '10'))
       .to.be.revertedWithCustomError(ResiToken, 'TransferForbidden')
@@ -490,5 +536,19 @@ describe('Bridge Registry', () => {
     await expect(ResiToken.connect(user).transferFrom(await deployer.getAddress(), await deployer.getAddress(), '10'))
       .to.be.revertedWithCustomError(ResiToken, 'TransferFromForbidden')
       .withArgs('RESIToken: NO TRANSFER FROM ALLOWED')
+  })
+
+  it('Should not allow to execute burn', async () => {
+    await expect(ResiToken.connect(user)['burn(uint256)']('10')).to.be.revertedWithCustomError(
+      ResiToken,
+      'BurnForbbidden'
+    )
+  })
+
+  it('Should not allow to execute burn from', async () => {
+    await expect(ResiToken.connect(user).burnFrom(await deployer.getAddress(), '10')).to.be.revertedWithCustomError(
+      ResiToken,
+      'BurnForbbidden'
+    )
   })
 })
