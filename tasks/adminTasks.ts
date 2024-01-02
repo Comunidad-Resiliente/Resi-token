@@ -20,6 +20,38 @@ export const tasks = () => {
       }
     })
 
+  // eslint-disable-next-line no-empty-pattern
+  task('enable-exits', 'Set value token').setAction(async ({}, {ethers}) => {
+    const [admin] = await ethers.getSigners()
+    const ResiToken: ResiToken = await ethers.getContract('ResiToken')
+    const response = await ResiToken.connect(admin).enableExits()
+
+    console.log(chalk.yellow(`Transaction hash: ${response.hash}`))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const receipt: any = await response.wait()
+    if (receipt.status !== 0) {
+      console.log(chalk.green('Done!'))
+    } else {
+      console.log(chalk.red('Failed!'))
+    }
+  })
+
+  // eslint-disable-next-line no-empty-pattern
+  task('disable-exits', 'Set value token').setAction(async ({}, {ethers}) => {
+    const [admin] = await ethers.getSigners()
+    const ResiToken: ResiToken = await ethers.getContract('ResiToken')
+    const response = await ResiToken.connect(admin).disableExits()
+
+    console.log(chalk.yellow(`Transaction hash: ${response.hash}`))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const receipt: any = await response.wait()
+    if (receipt.status !== 0) {
+      console.log(chalk.green('Done!'))
+    } else {
+      console.log(chalk.red('Failed!'))
+    }
+  })
+
   task('add-builder', 'Add builder')
     .addParam('builder', 'Builder address')
     .setAction(async ({builder}, {ethers}) => {
@@ -57,7 +89,7 @@ export const tasks = () => {
   task('award', 'Award builder')
     .addParam('builder', 'Builder address')
     .addParam('amount', 'Amount to reward')
-    .addParam('serie id', 'Serie ID')
+    .addParam('serieId', 'Serie ID')
     .setAction(async ({builder, amount, serieId}, {ethers}) => {
       const [admin] = await ethers.getSigners()
       const ResiToken: ResiToken = await ethers.getContract('ResiToken')

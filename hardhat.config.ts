@@ -8,6 +8,10 @@ import 'hardhat-contract-sizer'
 import networks from './hardhat.networks'
 import namedAccounts from './hardhat.accounts'
 
+import {tasks as AdminTasks} from './tasks/adminTasks'
+
+AdminTasks()
+
 const config: HardhatUserConfig = {
   solidity: '0.8.20',
   networks,
