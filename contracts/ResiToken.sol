@@ -158,7 +158,7 @@ contract ResiToken is
         if (_serieId == 0) revert InvalidSerie(_serieId);
         _burn(address(this), _value);
         serieSupplies[_serieId] -= _value;
-        emit ResiTokenBurnt(_msgSender(), _value, _serieId);
+        emit ResiTokenBurnt(_value, _serieId);
     }
 
     function exit(uint256 _serieId) external whenExitIsEnabled nonReentrant {

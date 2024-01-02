@@ -526,6 +526,38 @@ describe('Bridge Registry', () => {
     }
   })
 
+  it('Should allow to burn resi tokens', async () => {
+    // GIVEN
+
+    const userToAward = await user.getAddress()
+    const amount = ethers.parseEther('0.3')
+    const serieId = 1
+
+    const initialSerieSupply = await ResiToken.serieSupplies(serieId)
+
+    await addBuilder(userToAward)
+    await addBuilder(await userTwo.getAddress())
+    await ResiToken.connect(treasury).award(userToAward, amount, serieId)
+    await ResiToken.connect(treasury).award(await userTwo.getAddress(), ethers.parseEther('0.5'), serieId)
+    await ResiToken.connect(treasury).enableExits()
+
+    await ResiToken.connect(user).exit(serieId)
+    const middleSerieSupply = await ResiToken.serieSupplies(serieId)
+
+    // WHEN
+
+    await expect(ResiToken.connect(treasury)['burn(uint256,uint256)']('10', serieId))
+      .to.emit(ResiToken, 'ResiTokenBurnt')
+      .withArgs('10', serieId)
+
+    const finalSerieSupply = await ResiToken.serieSupplies(serieId)
+    // THEN
+    expect(initialSerieSupply).to.be.equal('0')
+    expect(middleSerieSupply).to.be.equal(ethers.parseEther('0.8'))
+    expect(finalSerieSupply).to.be.lessThan(middleSerieSupply)
+    expect(finalSerieSupply).to.be.equal(middleSerieSupply - BigInt('10'))
+  })
+
   it('Should not allow to execute transfer', async () => {
     await expect(ResiToken.connect(user).transfer(await deployer.getAddress(), '10'))
       .to.be.revertedWithCustomError(ResiToken, 'TransferForbidden')
