@@ -25,8 +25,9 @@ contract ResiToken is
     using EnumerableSet for EnumerableSet.Bytes32Set;
     EnumerableSet.Bytes32Set private _rolesSet;
 
+    /// @dev token decimals
     uint8 private _DECIMALS;
-
+    /// @dev treasury address
     address public TREASURY;
 
     address public STABLE_TOKEN;
@@ -80,7 +81,7 @@ contract ResiToken is
     ///@dev Version for upgradeable version
     ///@return version
     function version() external pure returns (string memory) {
-        return "1.0.0";
+        return "1.0.1";
     }
 
     function decimals() public view override(ERC20Upgradeable, IResiToken) returns (uint8) {

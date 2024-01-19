@@ -9,7 +9,7 @@ export type TaskArgs = {
   constructorArguments?: string[]
 }
 
-const NETWORKS_NOT_SUPPORTED: string[] = ['']
+const NETWORKS_NOT_SUPPORTED: string[] = ['vchain_testnet']
 
 export const verifyContract = async (
   network: Network,
@@ -24,6 +24,7 @@ export const verifyContract = async (
       if (!upgradeable) {
         ImplementationContract = await ethers.getContract(`${contractName}`)
       } else {
+        console.log('DONDE ESTA ENTRANDO??')
         ImplementationContract = await ethers.getContract(`${contractName}_Implementation`)
       }
     } catch (err: unknown) {

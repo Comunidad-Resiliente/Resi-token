@@ -21,7 +21,7 @@ export const tasks = () => {
     })
 
   // eslint-disable-next-line no-empty-pattern
-  task('enable-exits', 'Set value token').setAction(async ({}, {ethers}) => {
+  task('enable-exits', 'Enable exits').setAction(async ({}, {ethers}) => {
     const [admin] = await ethers.getSigners()
     const ResiToken: ResiToken = await ethers.getContract('ResiToken')
     const response = await ResiToken.connect(admin).enableExits()
@@ -93,7 +93,7 @@ export const tasks = () => {
     .setAction(async ({builder, amount, serieId}, {ethers}) => {
       const [admin] = await ethers.getSigners()
       const ResiToken: ResiToken = await ethers.getContract('ResiToken')
-      const response = await ResiToken.connect(admin).award(builder, amount, serieId)
+      const response = await ResiToken.connect(admin).award(builder, ethers.parseEther(amount), serieId)
 
       console.log(chalk.yellow(`Transaction hash: ${response.hash}`))
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
