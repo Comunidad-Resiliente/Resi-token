@@ -8,6 +8,12 @@ import 'hardhat-contract-sizer'
 import networks from './hardhat.networks'
 import namedAccounts from './hardhat.accounts'
 
+import {tasks as AdminTasks} from './tasks/adminTasks'
+import {tasks as ViewTasks} from './tasks/viewTasks'
+
+AdminTasks()
+ViewTasks()
+
 const config: HardhatUserConfig = {
   solidity: '0.8.20',
   networks,
@@ -16,7 +22,7 @@ const config: HardhatUserConfig = {
   abiExporter: {
     path: './abis',
     runOnCompile: false,
-    // only: [':BridgeCore$', ':BridgeRegistry$', ':TokenTransfer$]
+    only: [':ResiToken$']
   },
   contractSizer: {
     alphaSort: true,
