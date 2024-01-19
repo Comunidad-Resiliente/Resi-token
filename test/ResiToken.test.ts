@@ -50,7 +50,7 @@ describe('Bridge Registry', () => {
     const tokenDecimals = await ResiToken.decimals()
 
     // THEN
-    expect(version).to.be.equal('1.0.0')
+    expect(version).to.be.equal('1.0.1')
 
     expect(amountOfAdmins).to.be.equal(1)
     expect(amountOfBuilders).to.be.equal(0)
