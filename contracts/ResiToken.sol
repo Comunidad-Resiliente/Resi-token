@@ -81,7 +81,7 @@ contract ResiToken is
     ///@dev Version for upgradeable version
     ///@return version
     function version() external pure returns (string memory) {
-        return "1.0.1";
+        return "1.0.0";
     }
 
     function decimals() public view override(ERC20Upgradeable, IResiToken) returns (uint8) {
