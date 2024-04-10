@@ -4,6 +4,8 @@ pragma solidity ^0.8.20;
 interface IResiToken {
     function decimals() external view returns (uint8);
 
+    function exit(uint256 _serieId) external;
+
     event ResiTokenInitialized(address treasury, address _token, uint8 decimals);
     event BuilderAdded(address newMinter);
     event BuilderRemoved(address builder);

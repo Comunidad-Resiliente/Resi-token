@@ -35,7 +35,7 @@ describe('Bridge Registry', () => {
     // GIVEN
     const name = 'RESI-TOKEN'
     const symbol = 'RESI'
-    const decimals = 18
+    const decimals = 6
     // WHEN
     const version: string = await ResiToken.version()
 
@@ -50,7 +50,7 @@ describe('Bridge Registry', () => {
     const tokenDecimals = await ResiToken.decimals()
 
     // THEN
-    expect(version).to.be.equal('1.0.1')
+    expect(version).to.be.equal('1.0.0')
 
     expect(amountOfAdmins).to.be.equal(1)
     expect(amountOfBuilders).to.be.equal(0)
