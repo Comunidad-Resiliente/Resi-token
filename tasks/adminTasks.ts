@@ -37,7 +37,7 @@ export const tasks = () => {
   })
 
   // eslint-disable-next-line no-empty-pattern
-  task('disable-exits', 'Set value token').setAction(async ({}, {ethers}) => {
+  task('disable-exits', 'Disable exits').setAction(async ({}, {ethers}) => {
     const [admin] = await ethers.getSigners()
     const ResiToken: ResiToken = await ethers.getContract('ResiToken')
     const response = await ResiToken.connect(admin).disableExits()
@@ -104,13 +104,4 @@ export const tasks = () => {
         console.log(chalk.red('Failed!'))
       }
     })
-
-  // eslint-disable-next-line no-empty-pattern
-  task('get-version', 'Get contract version').setAction(async ({}, {ethers}) => {
-    const ResiToken: ResiToken = await ethers.getContract('ResiToken')
-    const response = await ResiToken.version()
-
-    console.log(chalk.green('---- CONTRACT VERSION ----'))
-    console.log(response.toString())
-  })
 }

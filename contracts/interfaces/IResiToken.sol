@@ -4,14 +4,17 @@ pragma solidity ^0.8.20;
 interface IResiToken {
     function decimals() external view returns (uint8);
 
+    function exit(uint256 _serieId) external;
+
     event ResiTokenInitialized(address treasury, address _token, uint8 decimals);
     event BuilderAdded(address newMinter);
     event BuilderRemoved(address builder);
     event ResiTokenBurnt(uint256 value, uint256 serieId);
     event UserAwarded(address user, uint256 amount, uint256 serieId);
     event ValueTokenUpdated(address oldToken, address newToken);
-    event Exit(address user, uint256 amount, uint256 serieId);
+    event Exit(address indexed user, uint256 amount, uint256 serieId);
     event ExitStateUpdated(bool update);
+    event ValueTokenWithdrawn(uint256 amount);
 
     error InvalidAddress(address adr);
     error InvalidAmount(uint256 amount);

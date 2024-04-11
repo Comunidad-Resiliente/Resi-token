@@ -5,9 +5,7 @@ import {verifyContract} from '../scripts/verifyContract'
 
 const version = 'v1.0.0'
 const ContractName = 'ResiToken'
-const TOKEN_NAME = process.env.TOKEN_NAME ? process.env.TOKEN_NAME : 'RESI-TOKEN'
-const TOKEN_SYMBOL = process.env.TOKEN_SYMBOL ? process.env.TOKEN_SYMBOL : 'RESI'
-const TOKEN_DECIMALS = process.env.TOKEN_DECIMALS ? process.env.TOKEN_DECIMALS : 18
+const TOKEN_DECIMALS = process.env.TOKEN_DECIMALS ? process.env.TOKEN_DECIMALS : 6
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {deployments, getNamedAccounts, network} = hre
@@ -25,7 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: 'initialize',
-          args: [TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, treasury, token, []]
+          args: [TOKEN_DECIMALS, treasury, token, []]
         }
       }
     },

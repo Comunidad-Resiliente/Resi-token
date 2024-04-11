@@ -35,7 +35,7 @@ describe('Bridge Registry', () => {
     // GIVEN
     const name = 'RESI-TOKEN'
     const symbol = 'RESI'
-    const decimals = 18
+    const decimals = 6
     // WHEN
     const version: string = await ResiToken.version()
 
@@ -50,7 +50,7 @@ describe('Bridge Registry', () => {
     const tokenDecimals = await ResiToken.decimals()
 
     // THEN
-    expect(version).to.be.equal('1.0.1')
+    expect(version).to.be.equal('1.0.0')
 
     expect(amountOfAdmins).to.be.equal(1)
     expect(amountOfBuilders).to.be.equal(0)
@@ -357,8 +357,10 @@ describe('Bridge Registry', () => {
     const userToAward = await user.getAddress()
     const amount = ethers.parseEther('0.3')
     const serieId = 1
+
     await addBuilder(userToAward)
     await addBuilder(await userTwo.getAddress())
+
     await ResiToken.connect(treasury).award(userToAward, amount, serieId)
     await ResiToken.connect(treasury).award(await userTwo.getAddress(), ethers.parseEther('0.5'), serieId)
     await ResiToken.connect(treasury).enableExits()
@@ -582,5 +584,23 @@ describe('Bridge Registry', () => {
       ResiToken,
       'BurnForbbidden'
     )
+  })
+
+  it('Should not allow to withdrawn stable token funds if contract not paused', async () => {
+    await expect(ResiToken.connect(treasury).withdrawnValueToken()).to.be.revertedWithCustomError(
+      ResiToken,
+      'ExpectedPause'
+    )
+  })
+
+  it('Should not allow to withdrawn stable token funds to anyone', async () => {
+    // WHEN
+    try {
+      await ResiToken.connect(invalidSigner).withdrawnValueToken()
+    } catch (error: unknown) {
+      // THEN
+      const err = error.message
+      expect(err).to.include('AccessControlUnauthorizedAccount')
+    }
   })
 })
