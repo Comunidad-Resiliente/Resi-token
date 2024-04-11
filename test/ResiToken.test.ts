@@ -585,4 +585,22 @@ describe('Bridge Registry', () => {
       'BurnForbbidden'
     )
   })
+
+  it('Should not allow to withdrawn stable token funds if contract not paused', async () => {
+    await expect(ResiToken.connect(treasury).withdrawnValueToken()).to.be.revertedWithCustomError(
+      ResiToken,
+      'ExpectedPause'
+    )
+  })
+
+  it('Should not allow to withdrawn stable token funds to anyone', async () => {
+    // WHEN
+    try {
+      await ResiToken.connect(invalidSigner).withdrawnValueToken()
+    } catch (error: unknown) {
+      // THEN
+      const err = error.message
+      expect(err).to.include('AccessControlUnauthorizedAccount')
+    }
+  })
 })
