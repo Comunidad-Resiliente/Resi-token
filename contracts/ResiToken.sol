@@ -252,6 +252,16 @@ contract ResiToken is
     }
 
     /**
+     * @dev Withdrawn stable token funds from dust back to the treasury.
+     */
+    function withdrawnValueToken() external onlyRole(DEFAULT_ADMIN_ROLE) whenPaused {
+        uint256 currentValueTokenBalance = IERC20(STABLE_TOKEN).balanceOf(address(this));
+        require(IERC20(STABLE_TOKEN).balanceOf(address(this)) > 0, "RESIToken: NO STABLE TOKEN FUNDS TO WITHDRAWN");
+        SafeERC20.safeTransfer(IERC20(STABLE_TOKEN), _msgSender(), currentValueTokenBalance);
+        emit ValueTokenWithdrawn(currentValueTokenBalance);
+    }
+
+    /**
      *  @dev It is not allowed to transfer resi token
      */
     function transfer(address, uint256) public pure override(ERC20Upgradeable) returns (bool) {

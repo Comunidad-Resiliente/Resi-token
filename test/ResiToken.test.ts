@@ -357,8 +357,10 @@ describe('Bridge Registry', () => {
     const userToAward = await user.getAddress()
     const amount = ethers.parseEther('0.3')
     const serieId = 1
+
     await addBuilder(userToAward)
     await addBuilder(await userTwo.getAddress())
+
     await ResiToken.connect(treasury).award(userToAward, amount, serieId)
     await ResiToken.connect(treasury).award(await userTwo.getAddress(), ethers.parseEther('0.5'), serieId)
     await ResiToken.connect(treasury).enableExits()

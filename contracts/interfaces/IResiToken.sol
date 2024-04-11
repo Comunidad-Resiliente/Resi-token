@@ -12,8 +12,9 @@ interface IResiToken {
     event ResiTokenBurnt(uint256 value, uint256 serieId);
     event UserAwarded(address user, uint256 amount, uint256 serieId);
     event ValueTokenUpdated(address oldToken, address newToken);
-    event Exit(address user, uint256 amount, uint256 serieId);
+    event Exit(address indexed user, uint256 amount, uint256 serieId);
     event ExitStateUpdated(bool update);
+    event ValueTokenWithdrawn(uint256 amount);
 
     error InvalidAddress(address adr);
     error InvalidAmount(uint256 amount);
