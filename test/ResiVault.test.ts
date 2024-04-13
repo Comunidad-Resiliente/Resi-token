@@ -16,7 +16,6 @@ describe('Resi Vault', () => {
   before(async () => {
     const accounts = await getNamedAccounts()
     const signers = await ethers.getSigners()
-    deployer = await ethers.getSigner(accounts.deployer)
     treasury = await ethers.getSigner(accounts.treasury)
     invalidSigner = signers[18]
     user = signers[17]
