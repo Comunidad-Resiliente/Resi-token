@@ -87,10 +87,10 @@ npx hardhat verify --network <NETWORK> <CONTRACT_ADDRESS>
 
 ### Tasks
 
-1. Set value token: change stable token.
+1. Set serie vault: set serie vault address.
 
 ```bash
-npx hardhat set-value-token --token <TOKEN_ADDRESS> --network <NETWORK>
+npx hardhat set-serie-vault --vault <VAULT_ADDRESS> --serie <SERIE_ID> --network <NETWORK>
 ```
 
 2. Enable exits
@@ -139,6 +139,12 @@ npx hardhat serie-supply --serie-id <SERIE_ID> --network <NETWORK>
 
 ```bash
 npx hardhat user-serie-balance --serie-id <SERIE_ID> --user <USER_ADDRESS>
+```
+
+10. Update serie vault status
+
+```bash
+npx hardhat update-serie-vault-status --serie <SERIE_ID> --status <STATUS> --network <NETWORK>
 ```
 
 ### Authors
