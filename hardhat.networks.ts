@@ -13,8 +13,8 @@ const networks = {
   },
   polygon: {
     chainId: 137,
-    url: process.env.ALCHEMY_KEY
-      ? `https://polygon-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`
+    url: process.env.POLYGON_ALCHEMY_KEY
+      ? `https://polygon-mainnet.g.alchemy.com/v2/${process.env.POLYGON_ALCHEMY_KEY}`
       : 'https://speedy-nodes-nyc.moralis.io/237feb2eade8c576d06ac0ae/polygon/mainnet',
     accounts: {mnemonic: process.env.MNEMONIC ? process.env.MNEMONIC : ''},
     live: true
@@ -22,8 +22,8 @@ const networks = {
   mumbai: {
     live: true,
     chainId: 80001,
-    url: process.env.ALCHMEMY_MUMBAI_KEY
-      ? `https://polygon-mumbai.g.alchemy.com/v2/${process.env.ALCHMEMY_MUMBAI_KEY}`
+    url: process.env.MUMBAI_ALCHEMY_KEY
+      ? `https://polygon-mumbai.g.alchemy.com/v2/${process.env.MUMBAI_ALCHEMY_KEY}`
       : 'https://rpc-mumbai.maticvigil.com',
     accounts: {
       mnemonic: process.env.MNEMONIC ? process.env.MNEMONIC : ''
