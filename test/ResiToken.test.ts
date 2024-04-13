@@ -2,17 +2,18 @@ import {expect} from 'chai'
 import {ethers, getNamedAccounts} from 'hardhat'
 import {resiMainFixture} from './fixtures'
 import {Contract, Signer} from 'ethers'
-import {ResiToken} from '../typechain-types'
+import {ResiToken, ResiVault} from '../typechain-types'
 import {DEFAULT_ADMIN_ROLE, BUILDER_ROLE} from './constants'
 import {addBuilder, deployMockERC20} from './utils'
 
-describe('Bridge Registry', () => {
+describe('Resi Token', () => {
   let deployer: Signer
   let treasury: Signer
   let invalidSigner: Signer
   let user: Signer
   let userTwo: Signer
   let ResiToken: ResiToken
+  let ResiVault: ResiVault
   let MockToken: Contract
 
   before(async () => {
@@ -26,8 +27,9 @@ describe('Bridge Registry', () => {
   })
 
   beforeEach(async () => {
-    const {ResiTokenContract, MockTokenContract} = await resiMainFixture()
+    const {ResiTokenContract, ResiVaultContract, MockTokenContract} = await resiMainFixture()
     ResiToken = ResiTokenContract
+    ResiVault = ResiVaultContract
     MockToken = MockTokenContract
   })
 
@@ -44,7 +46,6 @@ describe('Bridge Registry', () => {
     const adminRole = await ResiToken.getRoleAdmin(DEFAULT_ADMIN_ROLE)
     const deployerIsAdmin = await ResiToken.hasRole(DEFAULT_ADMIN_ROLE, await deployer.getAddress())
     const treasuryIsAdmin = await ResiToken.hasRole(DEFAULT_ADMIN_ROLE, await treasury.getAddress())
-    const token = await ResiToken.STABLE_TOKEN()
     const tokenName = await ResiToken.name()
     const tokenSymbol = await ResiToken.symbol()
     const tokenDecimals = await ResiToken.decimals()
@@ -59,44 +60,9 @@ describe('Bridge Registry', () => {
     expect(deployerIsAdmin).to.be.false
     // eslint-disable-next-line no-unused-expressions
     expect(treasuryIsAdmin).to.be.true
-    expect(await MockToken.getAddress()).to.be.equal(token)
     expect(tokenName).to.be.equal(name)
     expect(tokenSymbol).to.be.equal(symbol)
     expect(tokenDecimals).to.be.equal(decimals)
-  })
-
-  it('Should allow to set value token', async () => {
-    // GIVEN
-    const currentToken = await ResiToken.STABLE_TOKEN()
-    const newToken = await deployMockERC20({name: 'NEW-TOKEN', symbol: 'NTOKEN'})
-    // WHEN
-    await expect(ResiToken.connect(treasury).setValueToken(await newToken.getAddress()))
-      .to.emit(ResiToken, 'ValueTokenUpdated')
-      .withArgs(currentToken, await newToken.getAddress())
-    const expectedNewToken = await ResiToken.STABLE_TOKEN()
-    // THEN
-    expect(currentToken).to.be.equal(await MockToken.getAddress())
-    expect(await newToken.getAddress()).to.be.equal(expectedNewToken)
-  })
-
-  it('Should not allow to set value token if invalid role', async () => {
-    // WHEN
-    try {
-      await ResiToken.connect(invalidSigner).setValueToken(await MockToken.getAddress())
-    } catch (error: unknown) {
-      // THEN
-      const err = error.message
-      expect(err).to.include('AccessControlUnauthorizedAccount')
-    }
-  })
-
-  it('Should not allow to set value token if invalid address', async () => {
-    // GIVEN
-    const invalidToken = ethers.ZeroAddress
-    // WHEN //THEN
-    await expect(ResiToken.connect(treasury).setValueToken(invalidToken))
-      .to.be.revertedWithCustomError(ResiToken, 'InvalidAddress')
-      .withArgs(invalidToken)
   })
 
   it('Should not allow to add builder if invalid role', async () => {
@@ -358,6 +324,7 @@ describe('Bridge Registry', () => {
     const amount = ethers.parseEther('0.3')
     const serieId = 1
 
+    await ResiToken.connect(treasury).setSerieVault(await ResiVault.getAddress(), 1)
     await addBuilder(userToAward)
     await addBuilder(await userTwo.getAddress())
 
@@ -366,7 +333,7 @@ describe('Bridge Registry', () => {
     await ResiToken.connect(treasury).enableExits()
 
     const userInitialResiBalance = await ResiToken.balanceOf(await user.getAddress())
-    const stableTokenContractBalance = await MockToken.balanceOf(await ResiToken.getAddress())
+    const stableTokenContractBalance = await ResiVault.getStableTokenBalance()
     const userStableTokenInitialBalance = await MockToken.balanceOf(await user.getAddress())
     const userSerieBalance = await ResiToken.userSerieBalance(serieId, await user.getAddress())
 
@@ -379,7 +346,7 @@ describe('Bridge Registry', () => {
 
     const userFinalResiBalance = await ResiToken.balanceOf(await user.getAddress())
     const userStableTokenFinalBalance = await MockToken.balanceOf(await user.getAddress())
-    const stableTokenContractFinalBalance = await MockToken.balanceOf(await ResiToken.getAddress())
+    const stableTokenContractFinalBalance = await ResiVault.getStableTokenBalance()
     const userSerieFinalBalance = await ResiToken.userSerieBalance(serieId, await user.getAddress())
 
     const serieSupply = await ResiToken.serieSupplies(serieId)
@@ -445,40 +412,64 @@ describe('Bridge Registry', () => {
       .withArgs(notBuilder)
   })
 
-  it('Should not allow to exit if serie has not minted supply', async () => {
+  it('Should not allow to exit if serie has not set vault address', async () => {
     // GIVEN
     await ResiToken.connect(treasury).addBuilder(await user.getAddress())
     await ResiToken.connect(treasury).enableExits()
     // WHEN // THEN
     await expect(ResiToken.connect(user).exit(2))
-      .to.be.revertedWithCustomError(ResiToken, 'SerieWithNoMintedSupply')
-      .withArgs(2)
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidSerieVault')
+      .withArgs(2, ethers.ZeroAddress)
+  })
+
+  it('Should not allow to exit if serie vault is inactive', async () => {
+    // GIVEN
+    await ResiToken.connect(treasury).addBuilder(await user.getAddress())
+    await ResiToken.connect(treasury).enableExits()
+    await ResiToken.connect(treasury).setSerieVault(await userTwo.getAddress(), 1)
+    await ResiToken.connect(treasury).updateSerieVaultStatus(1, false)
+    // WHEN // THEN
+    await expect(ResiToken.connect(user).exit(1))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidSerieVault')
+      .withArgs(1, await userTwo.getAddress())
   })
 
   it('Should not allow to exit if user has no serie balance', async () => {
     // GIVEN
     await ResiToken.connect(treasury).addBuilder(await user.getAddress())
     await ResiToken.connect(treasury).enableExits()
-    await ResiToken.connect(treasury).award(await user.getAddress(), '10', 2)
     await ResiToken.connect(treasury).addBuilder(await deployer.getAddress())
     await ResiToken.connect(treasury).award(await deployer.getAddress(), '10', 1)
+    await ResiToken.connect(treasury).setSerieVault(await ResiVault.getAddress(), 1)
     // WHEN // THEN
     await expect(ResiToken.connect(user).exit(1))
       .to.be.revertedWithCustomError(ResiToken, 'InvalidUserSerieBalance')
       .withArgs(0)
   })
 
+  it('Should not allow to exit if serie has no minted supply', async () => {
+    // GIVEN
+    await ResiToken.connect(treasury).addBuilder(await user.getAddress())
+    await ResiToken.connect(treasury).enableExits()
+    await ResiToken.connect(treasury).setSerieVault(await ResiVault.getAddress(), 1)
+    // WHEN // THEN
+    await expect(ResiToken.connect(user).exit(1))
+      .to.be.revertedWithCustomError(ResiToken, 'SerieWithNoMintedSupply')
+      .withArgs(1)
+  })
+
   it('Should not allow to exit if contract has not enough balance of stable token', async () => {
     // GIVEN
     await ResiToken.connect(treasury).addBuilder(await user.getAddress())
     await ResiToken.connect(treasury).enableExits()
-    await ResiToken.connect(treasury).award(await user.getAddress(), '10', 2)
+    await ResiToken.connect(treasury).award(await user.getAddress(), '10', 1)
 
     const token = await deployMockERC20({name: 'TERC20', symbol: 'TERC20'})
-    await ResiToken.connect(treasury).setValueToken(await token.getAddress())
+    await ResiVault.connect(treasury).setValueToken(await token.getAddress())
+    await ResiToken.connect(treasury).setSerieVault(await ResiVault.getAddress(), 1)
 
     // WHEN // THEN
-    await expect(ResiToken.connect(user).exit(2)).to.be.revertedWithCustomError(ResiToken, 'InvalidQuote')
+    await expect(ResiToken.connect(user).exit(1)).to.be.revertedWithCustomError(ResiToken, 'InvalidQuote')
   })
 
   it('Should allow to pause contract and then upause it', async () => {
@@ -542,6 +533,7 @@ describe('Bridge Registry', () => {
     await ResiToken.connect(treasury).award(userToAward, amount, serieId)
     await ResiToken.connect(treasury).award(await userTwo.getAddress(), ethers.parseEther('0.5'), serieId)
     await ResiToken.connect(treasury).enableExits()
+    await ResiToken.connect(treasury).setSerieVault(await ResiVault.getAddress(), 1)
 
     await ResiToken.connect(user).exit(serieId)
     const middleSerieSupply = await ResiToken.serieSupplies(serieId)
@@ -587,7 +579,7 @@ describe('Bridge Registry', () => {
   })
 
   it('Should not allow to withdrawn stable token funds if contract not paused', async () => {
-    await expect(ResiToken.connect(treasury).withdrawnValueToken()).to.be.revertedWithCustomError(
+    await expect(ResiToken.connect(treasury).withdrawSerieVaultToken(1)).to.be.revertedWithCustomError(
       ResiToken,
       'ExpectedPause'
     )
@@ -596,11 +588,42 @@ describe('Bridge Registry', () => {
   it('Should not allow to withdrawn stable token funds to anyone', async () => {
     // WHEN
     try {
-      await ResiToken.connect(invalidSigner).withdrawnValueToken()
+      await ResiToken.connect(invalidSigner).withdrawSerieVaultToken(2)
     } catch (error: unknown) {
       // THEN
       const err = error.message
       expect(err).to.include('AccessControlUnauthorizedAccount')
     }
+  })
+
+  it('Should allow to update serie vault status', async () => {
+    // GIVEN
+    const serieId = 2
+    const status = true
+    // WHEN //THEN
+    await expect(ResiToken.connect(treasury).updateSerieVaultStatus(serieId, status))
+      .to.emit(ResiToken, 'SerieVaultStatusUpdated')
+      .withArgs(serieId, status)
+  })
+
+  it('Should not allow to upadte serie vault status if invalid role', async () => {
+    // WHEN
+    try {
+      await ResiToken.connect(invalidSigner).updateSerieVaultStatus(2, false)
+    } catch (error: unknown) {
+      // THEN
+      const err = error.message
+      expect(err).to.include('AccessControlUnauthorizedAccount')
+    }
+  })
+
+  it('Should not allow to update serie vault status if invalid serie', async () => {
+    // GIVEN
+    const invalidSerieId = 0
+    const status = true
+    // WHEN //THEN
+    await expect(ResiToken.connect(treasury).updateSerieVaultStatus(invalidSerieId, status))
+      .to.be.revertedWithCustomError(ResiToken, 'InvalidSerie')
+      .withArgs(invalidSerieId)
   })
 })

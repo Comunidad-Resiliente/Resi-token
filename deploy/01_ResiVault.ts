@@ -4,17 +4,20 @@ import {printDeploySuccessful, printInfo} from '../utils'
 import {verifyContract} from '../scripts/verifyContract'
 
 const version = 'v1.0.0'
-const ContractName = 'ResiToken'
-const TOKEN_DECIMALS = process.env.TOKEN_DECIMALS ? process.env.TOKEN_DECIMALS : 6
+const ContractName = 'ResiVault'
+
+const SERIE_ID = process.env.SERIE_ID ? process.env.SERIE_ID : 1
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const {deployments, getNamedAccounts, network} = hre
   const {deploy} = deployments
-  const {deployer, treasury} = await getNamedAccounts()
+  const {deployer, treasury, token} = await getNamedAccounts()
 
   printInfo(`\n Deploying ${ContractName} contract on ${network.name}...`)
 
-  const ResiTokenResult = await deploy(ContractName, {
+  const ResiToken = await deployments.get('ResiToken')
+
+  const ResiVaultResult = await deploy(ContractName, {
     args: [],
     contract: ContractName,
     from: deployer,
@@ -23,7 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: 'initialize',
-          args: [TOKEN_DECIMALS, treasury, []]
+          args: [treasury, ResiToken.address, token, SERIE_ID]
         }
       }
     },
@@ -31,7 +34,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     skipIfAlreadyDeployed: false
   })
 
-  const resiTokenAddress = ResiTokenResult.address
+  const resiTokenAddress = ResiVaultResult.address
 
   printDeploySuccessful(ContractName, resiTokenAddress)
 
@@ -43,5 +46,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 export default func
 const id = ContractName + version
 func.tags = [id, ContractName, version]
-func.dependencies = ['']
+func.dependencies = ['ResiToken']
 func.id = id
