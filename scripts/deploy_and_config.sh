@@ -16,7 +16,3 @@ done
 echo "Deploying contracts to network $NETWORK"
 
 npx hardhat deploy --network $NETWORK --reset
-
-echo "Smart contracts configuration...."r
-
-npx hardhat set-value-token --token $TOKEN --network $NETWORK
