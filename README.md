@@ -147,6 +147,12 @@ npx hardhat user-serie-balance --serie-id <SERIE_ID> --user <USER_ADDRESS>
 npx hardhat update-serie-vault-status --serie <SERIE_ID> --status <STATUS> --network <NETWORK>
 ```
 
+11. Create vault
+
+```bash
+npx hardaht create-vault --stable-token <TOKEN_ADDRESS> --serie <SERIE_ID> --network <NETWORK>
+```
+
 ### Authors
 
 - Alejo Lovallo
