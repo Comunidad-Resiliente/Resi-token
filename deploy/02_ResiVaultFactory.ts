@@ -27,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   printDeploySuccessful(ContractName, resiVaultFactoryAddress)
 
-  await verifyContract(network, ContractName)
+  await verifyContract(network, ContractName, [treasury, ResiToken.address], false)
 
   return true
 }
