@@ -150,7 +150,7 @@ npx hardhat update-serie-vault-status --serie <SERIE_ID> --status <STATUS> --net
 11. Create vault
 
 ```bash
-npx hardaht create-vault --stable-token <TOKEN_ADDRESS> --serie <SERIE_ID> --network <NETWORK>
+npx hardhat create-vault --stable-token <TOKEN_ADDRESS> --serie <SERIE_ID> --network <NETWORK>
 ```
 
 ### Authors
