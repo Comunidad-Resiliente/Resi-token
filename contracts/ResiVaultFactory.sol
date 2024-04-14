@@ -11,44 +11,55 @@ contract ResiVaultFactory is IResiVaultFactory, Ownable {
     /// @dev Wrapped Token implementation
     address public immutable resiVaultImplementation;
 
+    /// @dev Resi token contract.
+    address public immutable RESI_TOKEN;
+
     /// @dev List of Resi Vaults
     ResiVault[] public resiVaults;
 
-    constructor(address _treasury) Ownable(_treasury) {
+    /**
+     * @dev Initialize contract
+     * @param _treasury treasury address.
+     * @param _resiToken Resi token address.
+     */
+    constructor(address _treasury, address _resiToken) Ownable(_treasury) {
         if (_treasury == address(0)) revert InvalidAddress(_treasury);
+        if (_resiToken == address(0)) revert InvalidAddress(_resiToken);
 
         /// @dev Wrapped token implementation contract
         resiVaultImplementation = address(new ResiVault());
 
-        emit ResiVaultFactoryInitialized(_treasury);
+        RESI_TOKEN = _resiToken;
+
+        emit ResiVaultFactoryInitialized(_treasury, _resiToken);
     }
 
     /**************************** INTERFACE  ****************************/
 
     /**
-     * @dev Create Wrapped token.
-     * @param name token name.
-     * @param symbol token symbol.
-     * @param _tokenTransferContract Token Transfer contract address to be designed as minter.
+     * @dev Create Resi Vault.
+     * @param _stableToken stable token address.
+     * @param _serieId Serie id.
      */
-    function createVault() external onlyOwner returns (address) {
-        if (_tokenTransferContract == address(0)) revert InvalidAddress(_tokenTransferContract);
+    function createVault(address _stableToken, uint256 _serieId) external onlyOwner returns (address) {
+        if (_stableToken == address(0)) revert InvalidAddress(_stableToken);
+        if (_serieId == 0) revert InvalidSerie(_serieId);
 
-        address clone = Clones.clone(tokenImplementation);
+        address clone = Clones.clone(resiVaultImplementation);
 
-        ResiVault(clone).initialize(name, symbol, decimals, BRIDGE_REGISTRY, _tokenTransferContract);
+        ResiVault(clone).initialize(_msgSender(), RESI_TOKEN, _stableToken, _serieId);
 
-        wrappedTokens.push(WrappedToken(clone));
+        resiVaults.push(ResiVault(clone));
 
-        emit WrappedTokenCreated(clone);
+        emit ResiVaultCreated(clone);
 
         return clone;
     }
 
     /**
-     * @dev get list of created wrapped tokens.
+     * @dev get list of created vaults.
      */
-    function getTokens() external view returns (ResiVault[] memory) {
+    function getVaults() external view returns (ResiVault[] memory) {
         return resiVaults;
     }
 }
