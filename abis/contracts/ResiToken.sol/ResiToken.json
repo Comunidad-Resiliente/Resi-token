@@ -29,28 +29,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "target",
-        "type": "address"
-      }
-    ],
-    "name": "AddressEmptyCode",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "AddressInsufficientBalance",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "builder",
         "type": "address"
       }
@@ -160,11 +138,6 @@
     "type": "error"
   },
   {
-    "inputs": [],
-    "name": "FailedInnerCall",
-    "type": "error"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -217,11 +190,6 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "currentValueTokenBalance",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "userBalance",
         "type": "uint256"
       },
@@ -254,11 +222,38 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "serieId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "vault",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidSerieVault",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
     ],
     "name": "InvalidUserSerieBalance",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "vault",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidVault",
     "type": "error"
   },
   {
@@ -269,17 +264,6 @@
   {
     "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "SafeERC20FailedOperation",
     "type": "error"
   },
   {
@@ -370,7 +354,7 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "user",
         "type": "address"
@@ -456,12 +440,6 @@
         "indexed": false,
         "internalType": "address",
         "name": "treasury",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "_token",
         "type": "address"
       },
       {
@@ -553,6 +531,50 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "serieId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "newStatus",
+        "type": "bool"
+      }
+    ],
+    "name": "SerieVaultStatusUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "serieId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldVault",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newVault",
+        "type": "address"
+      }
+    ],
+    "name": "SerieVaultUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "from",
@@ -617,18 +639,18 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "oldToken",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "serieId",
+        "type": "uint256"
       },
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "newToken",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       }
     ],
-    "name": "ValueTokenUpdated",
+    "name": "ValueTokenWithdrawn",
     "type": "event"
   },
   {
@@ -665,19 +687,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "STABLE_TOKEN",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -1031,16 +1040,6 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "_name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "_symbol",
-        "type": "string"
-      },
-      {
         "internalType": "uint8",
         "name": "_decimals",
         "type": "uint8"
@@ -1048,11 +1047,6 @@
       {
         "internalType": "address",
         "name": "_treasury",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_token",
         "type": "address"
       },
       {
@@ -1189,12 +1183,41 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_newToken",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "serieId",
+        "type": "uint256"
       }
     ],
-    "name": "setValueToken",
+    "name": "serieVaults",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "vault",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "active",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_vault",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_serieId",
+        "type": "uint256"
+      }
+    ],
+    "name": "setSerieVault",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1308,6 +1331,24 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "_serieId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "_status",
+        "type": "bool"
+      }
+    ],
+    "name": "updateSerieVaultStatus",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "serieId",
         "type": "uint256"
       },
@@ -1339,6 +1380,19 @@
       }
     ],
     "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_serieId",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawSerieVaultToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]

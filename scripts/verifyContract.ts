@@ -24,7 +24,6 @@ export const verifyContract = async (
       if (!upgradeable) {
         ImplementationContract = await ethers.getContract(`${contractName}`)
       } else {
-        console.log('DONDE ESTA ENTRANDO??')
         ImplementationContract = await ethers.getContract(`${contractName}_Implementation`)
       }
     } catch (err: unknown) {

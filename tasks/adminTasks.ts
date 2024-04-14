@@ -3,12 +3,31 @@ import chalk from 'chalk'
 import {ResiToken} from '../typechain-types'
 
 export const tasks = () => {
-  task('set-value-token', 'Set value token')
-    .addParam('token', 'Token address')
-    .setAction(async ({token}, {ethers}) => {
+  task('set-serie-vault', 'Set serie vault')
+    .addParam('vault', 'Vault address')
+    .addParam('serie', 'Serie id')
+    .setAction(async ({vault, serieId}, {ethers}) => {
       const [admin] = await ethers.getSigners()
       const ResiToken: ResiToken = await ethers.getContract('ResiToken')
-      const response = await ResiToken.connect(admin).setValueToken(token)
+      const response = await ResiToken.connect(admin).setSerieVault(vault, serieId)
+
+      console.log(chalk.yellow(`Transaction hash: ${response.hash}`))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const receipt: any = await response.wait()
+      if (receipt.status !== 0) {
+        console.log(chalk.green('Done!'))
+      } else {
+        console.log(chalk.red('Failed!'))
+      }
+    })
+
+  task('update-serie-vault-status', 'Update serie vault status')
+    .addParam('serie', 'Serie id')
+    .addParam('status', 'new status')
+    .setAction(async ({serie, status}, {ethers}) => {
+      const [admin] = await ethers.getSigners()
+      const ResiToken: ResiToken = await ethers.getContract('ResiToken')
+      const response = await ResiToken.connect(admin).updateSerieVaultStatus(serie, status)
 
       console.log(chalk.yellow(`Transaction hash: ${response.hash}`))
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,7 +56,7 @@ export const tasks = () => {
   })
 
   // eslint-disable-next-line no-empty-pattern
-  task('disable-exits', 'Set value token').setAction(async ({}, {ethers}) => {
+  task('disable-exits', 'Disable exits').setAction(async ({}, {ethers}) => {
     const [admin] = await ethers.getSigners()
     const ResiToken: ResiToken = await ethers.getContract('ResiToken')
     const response = await ResiToken.connect(admin).disableExits()
@@ -104,13 +123,4 @@ export const tasks = () => {
         console.log(chalk.red('Failed!'))
       }
     })
-
-  // eslint-disable-next-line no-empty-pattern
-  task('get-version', 'Get contract version').setAction(async ({}, {ethers}) => {
-    const ResiToken: ResiToken = await ethers.getContract('ResiToken')
-    const response = await ResiToken.version()
-
-    console.log(chalk.green('---- CONTRACT VERSION ----'))
-    console.log(response.toString())
-  })
 }

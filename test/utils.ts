@@ -27,3 +27,9 @@ export const award = async (user: string, amount: string, serieId: string) => {
   const ResiToken: ResiToken = await ethers.getContract('ResiToken')
   await ResiToken.connect(treasurySigner).award(user, amount, serieId)
 }
+
+export const deployResiVaultFactory = async (treasury: string, resiToken: string) => {
+  const ResiVaultFactory = await ethers.getContractFactory('ResiVaultFactory')
+  const Factory = await ResiVaultFactory.deploy(treasury, resiToken)
+  return Factory
+}
