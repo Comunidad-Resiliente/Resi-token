@@ -32,4 +32,21 @@ export const tasks = () => {
     console.log(chalk.green('---- CONTRACT VERSION ----'))
     console.log(response.toString())
   })
+
+  task('get-serie-vault', 'Get Serie Vault contract')
+    .addParam('serieId', 'Serie ID')
+    .setAction(async ({serieId}, {ethers}) => {
+      const ResiToken: ResiToken = await ethers.getContract('ResiToken')
+      const response = await ResiToken.serieVaults(serieId)
+      console.log('SERIE VAULT')
+      console.log(response)
+    })
+
+  // eslint-disable-next-line no-empty-pattern
+  task('get-treasury', 'Get treasury').setAction(async ({}, {ethers}) => {
+    const ResiToken: ResiToken = await ethers.getContract('ResiToken')
+    const response = await ResiToken.TREASURY()
+    console.log('------ TREASURY ------')
+    console.log(response)
+  })
 }
