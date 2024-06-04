@@ -49,4 +49,22 @@ export const tasks = () => {
     console.log('------ TREASURY ------')
     console.log(response)
   })
+
+  task('get-vault-serie', 'Get Vault serie')
+    .addParam('vault', 'Vault address')
+    .setAction(async ({vault}, {ethers}) => {
+      const ResiVault = await ethers.getContractAt('ResiVault', vault)
+      const response = await ResiVault.SERIE_ID()
+      console.log('VAULT SERIE')
+      console.log(response)
+    })
+
+  task('get-vault-resi-token', 'Get Vault serie')
+    .addParam('vault', 'Vault address')
+    .setAction(async ({vault}, {ethers}) => {
+      const ResiVault = await ethers.getContractAt('ResiVault', vault)
+      const response = await ResiVault.RESI_TOKEN()
+      console.log('VAULT SERIE')
+      console.log(response)
+    })
 }
