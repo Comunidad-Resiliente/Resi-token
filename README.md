@@ -153,6 +153,15 @@ npx hardhat update-serie-vault-status --serie <SERIE_ID> --status <STATUS> --net
 npx hardhat create-vault --stable-token  <TOKEN_ADDRESS> --serie  <SERIE_ID> --network <NETWORK>
 ```
 
+### Series and Vaults
+
+| Serie ID | Vault address                              | Token |     |     |
+| -------- | ------------------------------------------ | ----- | --- | --- |
+| 1        | 0xF75b4266d7227D2412227426eC1019065981D72F | USDT  |     |     |
+| 2        | 0xfd08F181b72ebD9822c405deA04B4F6EE463fbCC | USDT  |     |     |
+| 3        | 0x9e77Ec5425D19F5DD49DD4C21357Bb0ffFb41218 | USDT  |     |     |
+
+
 ### Authors
 
 - Alejo Lovallo
