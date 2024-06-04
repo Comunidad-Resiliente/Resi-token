@@ -161,6 +161,7 @@ npx hardhat create-vault --stable-token  <TOKEN_ADDRESS> --serie  <SERIE_ID> --n
 | 2        | 0xfd08F181b72ebD9822c405deA04B4F6EE463fbCC | USDT  |     |     |
 | 3        | 0x9e77Ec5425D19F5DD49DD4C21357Bb0ffFb41218 | USDT  |     |     |
 
+
 ### Authors
 
 - Alejo Lovallo
