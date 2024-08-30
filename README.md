@@ -153,6 +153,14 @@ npx hardhat update-serie-vault-status --serie <SERIE_ID> --status <STATUS> --net
 npx hardhat create-vault --stable-token  <TOKEN_ADDRESS> --serie  <SERIE_ID> --network <NETWORK>
 ```
 
+### Token addresses
+
+| Network     | Vault address                                                | Token Name |      |      |
+| ----------- | ------------------------------------------------------------ | ---------- | ---- | ---- |
+| Polygon     | [0xd9ae07e904E9A347b08B0baf6B4d2dbdc3E167a8](https://sepolia.etherscan.io/address/0xd9ae07e904E9A347b08B0baf6B4d2dbdc3E167a8) | ResiToken |      |      |
+| ETH-Sepolia |  | USDT       |      |      |
+
+
 ### Series and Vaults
 
 | Serie ID | Vault address                              | Token |     |     |

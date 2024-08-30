@@ -6,10 +6,10 @@ export const tasks = () => {
   task('set-serie-vault', 'Set serie vault')
     .addParam('vault', 'Vault address')
     .addParam('serie', 'Serie id')
-    .setAction(async ({vault, serieId}, {ethers}) => {
+    .setAction(async ({vault, serie}, {ethers}) => {
       const [admin] = await ethers.getSigners()
       const ResiToken: ResiToken = await ethers.getContract('ResiToken')
-      const response = await ResiToken.connect(admin).setSerieVault(vault, serieId)
+      const response = await ResiToken.connect(admin).setSerieVault(vault, serie)
 
       console.log(chalk.yellow(`Transaction hash: ${response.hash}`))
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

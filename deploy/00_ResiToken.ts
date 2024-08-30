@@ -4,7 +4,7 @@ import {printDeploySuccessful, printInfo} from '../utils'
 import {verifyContract} from '../scripts/verifyContract'
 
 const version = 'v1.0.0'
-const ContractName = 'ResiToken'
+const ContractName = process.env.TOKEN_NAME ? process.env.TOKEN_NAME : 'ResiToken'
 const TOKEN_DECIMALS = process.env.TOKEN_DECIMALS ? process.env.TOKEN_DECIMALS : 6
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
